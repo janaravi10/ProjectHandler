@@ -4,8 +4,11 @@
   "description": "A website to handle project and their revisions from the clients",
   "main": "server.js",
   "scripts": {
-    "start":"node server.js"
+    "start": "node server.js"
   },
   "author": "janaravi962",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.0"
+  }
 }
