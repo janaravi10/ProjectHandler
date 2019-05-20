@@ -1,0 +1,11 @@
+{
+  "name": "projecthandler",
+  "version": "1.0.0",
+  "description": "A website to handle project and their revisions from the clients",
+  "main": "server.js",
+  "scripts": {
+    "start":"node server.js"
+  },
+  "author": "janaravi962",
+  "license": "MIT"
+}
