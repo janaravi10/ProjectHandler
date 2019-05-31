@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const jwtSecret = require("../config/keys").jwtSecret;
 // signup model
 const SignUpModel = require("../schema/signup");
+// token model
+const TokenModel = require("../schema/token");
 /*  # @route domain/user/signup      *
  *  # @desc signup route to let user *
  *  # signup for the account         *
@@ -114,6 +116,38 @@ router.post("/login", function(req, res) {
       });
     }
   });
+});
+
+/*
+ * route for logging out the user from the session
+ * @route domain/user/logout
+ * @desc route for logging out the user
+ * @access public
+ */
+router.get("/logout", (req, res) => {
+  const bearer = req.headers.authorization;
+  if (bearer) {
+    const token = bearer.split(" ")[1];
+    //saving the token to database
+    let newToken = new TokenModel({ token: token, isExpired: false });
+    newToken.save(function(err) {
+      if (err) {
+        res.send({ success: false, msg: "Error in logging out" });
+      } else {
+        res.send({
+          success: true,
+          statusCode: 200,
+          error: "User logged out!"
+        });
+      }
+    });
+  } else {
+    res.json({
+      success: false,
+      statusCode: 401,
+      error: "Token not provided"
+    });
+  }
 });
 
 module.exports = router;
