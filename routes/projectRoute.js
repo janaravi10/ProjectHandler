@@ -14,6 +14,7 @@ multer.addImageNames = function(imageName) {
 
 // get images name
 multer.getImageNames = function() {
+  console.log(this.fileNames)
   return this.fileNames;
 };
 let storage = multer.diskStorage({
@@ -110,8 +111,26 @@ function fileHandlingMiddleWare(req, res, next) {
 // file removing middleware
 function removeFile(req, res, next) {
   if (req.hasToRemoveFiles) {
-    let imagesNames = multer.getImageNames();
-    
+    let imagesNames = (function(imgNames) {
+      console.log(imgNames)
+      let imgs = [];
+      for (let i = 0; i < imgNames.length; i++) {
+        imgs.push(imgNames[i].fileName);
+      }
+      return imgs;
+    })(multer.getImageNames());
+    let url, i;
+    console.log(imagesNames)
+    for (i = 0; i < imagesNames.length; i++) {
+      url = "./uploads/" + imagesNames[i];
+      if (fs.existsSync(url)) {
+        fs.unlink(url, err => console.log(err));
+      }
+    }
+    console.log("Not working")
+    return res.send({ msg: req.statusMessage, success: false });
+  } else {
+    return res.send({ msg: req.statusMessage, success: true });
   }
 }
 
