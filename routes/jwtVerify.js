@@ -11,7 +11,6 @@ module.exports = function verifyToken(req, res, next) {
     const token = bearer.split(" ")[1];
     // finding whether this token is stored in the logout collection
     // if it is stored then this is already logged out token
-    let sql = "SELECT * FROM tokens WHERE ?";
     let query = TokenModel.find({ token: token });
     query.then(result => {
       if (result.length) {
@@ -39,7 +38,7 @@ module.exports = function verifyToken(req, res, next) {
         });
       } else {
         // jwt verify this token
-        jwt.verify(token, secret, function(err, decoded) {
+        jwt.verify(token, jwtSecret, function(err, decoded) {
           if (err) {
             console.log("giving error here");
             res.json({
