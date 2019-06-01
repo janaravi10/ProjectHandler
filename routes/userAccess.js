@@ -27,7 +27,8 @@ router.post("/signup", function(req, res) {
       user = new SignUpModel({ email, password: hashedPassword });
       user.save(function(err) {
         if (err) {
-          console.log(err);
+          // if a document is already available then it will
+          // send the error with error code 11000
           if (err.code === 11000) {
             res.json({ success: false, msg: "Account already available!" });
           } else {
@@ -95,7 +96,6 @@ router.post("/login", function(req, res) {
             },
             function(err, token) {
               if (err) {
-                console.log(err);
                 res.status(500).send({
                   success: false,
                   msg: "server error"
