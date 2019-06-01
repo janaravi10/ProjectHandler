@@ -5,6 +5,8 @@ const fs = require("fs");
 const path = require("path");
 // using router to handle image uploads and source code uploads
 const multer = require("multer");
+// project model
+const ProjectUploadSchema = require("../schema/project");
 // custom function to save the names uploaded
 multer.addImageNames = function(imageName) {
   let fileNames = this.fileNames || [];
@@ -14,7 +16,7 @@ multer.addImageNames = function(imageName) {
 
 // get images name
 multer.getImageNames = function() {
-  console.log(this.fileNames)
+  console.log(this.fileNames);
   return this.fileNames;
 };
 let storage = multer.diskStorage({
@@ -44,26 +46,23 @@ let storage = multer.diskStorage({
 });
 // file filter function
 function fileFilter(req, file, cb) {
-  console.log(req.errorOccured);
   const body = req.body;
-  console.log(file);
   if (!body.projectName || !body.projectDescription) {
     // check if the project name and project description is missing or not
     cb(new Error("PROJECT_NAME_MISSING"), false);
   }
   let imgMime = ["image/jpeg", "image/png"];
+  // check if the file is image file
   if (
     imgMime.indexOf(file.mimetype) === -1 &&
     file.fieldname === "projectImage"
   ) {
-    req.errorOccured = true;
     return cb(new Error("INVALID_FILE_TYPE"), false);
   } else if (file.fieldname === "projectCode") {
     cb(null, true);
   } else if (file.fieldname === "projectImage") {
     cb(null, true);
   } else {
-    req.errorOccured = true;
     cb(new Error("UNEXPECTED_FILE"), false);
   }
 }
@@ -110,9 +109,12 @@ function fileHandlingMiddleWare(req, res, next) {
 }
 // file removing middleware
 function removeFile(req, res, next) {
+  // check if the hasToRemoveFiles property is set
   if (req.hasToRemoveFiles) {
+    // if some error or some field is null then
+    // we need to remove the files which is uploaded
     let imagesNames = (function(imgNames) {
-      console.log(imgNames)
+      // looping through the image array and getting the sring names of images
       let imgs = [];
       for (let i = 0; i < imgNames.length; i++) {
         imgs.push(imgNames[i].fileName);
@@ -120,28 +122,41 @@ function removeFile(req, res, next) {
       return imgs;
     })(multer.getImageNames());
     let url, i;
-    console.log(imagesNames)
     for (i = 0; i < imagesNames.length; i++) {
       url = "./uploads/" + imagesNames[i];
+      // checking if the image is available
       if (fs.existsSync(url)) {
+        // if the image is available delete it
         fs.unlink(url, err => console.log(err));
       }
     }
-    console.log("Not working")
     return res.send({ msg: req.statusMessage, success: false });
   } else {
-    return res.send({ msg: req.statusMessage, success: true });
+    let projectObject = {};
+    // uploading the image information
+    (function(images) {
+      // looping through the image array and getting the sring names of images
+      for (let i = 0; i < images.length; i++) {
+        projectObject[images[i].field] = images[i].fileName;
+      }
+    })(multer.getImageNames());
+    projectObject.projectName = req.body.projectName;
+    projectObject.projectDescription = req.body.projectDescription;
+    projectObject.projectDeveloper = req.userId;
+    // creating new Model
+    let projectModel = new ProjectUploadSchema(projectObject);
+    projectModel.save(function(err) {
+      if (!err) {
+        return res.send({ msg: req.statusMessage, success: true });
+      } else {
+        return res.send({ msg: "Internal server error", success: false });
+      }
+    });
   }
 }
 
 // @access private
 // @route domain/project/
 router.use(verifyToken);
-router.post("/upload", [fileHandlingMiddleWare, removeFile], function(
-  req,
-  res,
-  next
-) {
-  res.send("Hello");
-});
+router.post("/upload", [fileHandlingMiddleWare, removeFile]);
 module.exports = router;
